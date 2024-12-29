@@ -1,6 +1,8 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey
+from datetime import datetime, timedelta
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from alembic import context
 from config import DATABASE_URL
 
@@ -9,41 +11,41 @@ engine = create_engine(DATABASE_URL.replace("'", "") , echo=True)  # Echo=True �
 
 Base = declarative_base()
 
-class Candidates(Base):
-    __tablename__ = "candidates"
+class User(Base):
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    fio = Column(String)
-    telegram_id = Column(String)
-    phone_number = Column(String)
-    vacancy_id = Column(Integer, ForeignKey("vacancies.id"), unique=True)
-    first_interview_questions = Column(String)
-    second_interview_questions = Column(String)
-    test_task = Column(String)
-    title_of_vacancy = Column(String)
+    telegram_id = Column(String, unique=True)
+    user_words = relationship("UserWord", back_populates="user")
 
-    vacancy = relationship("Vacancies", back_populates="candidates") # Добавили relationship
-class Vacancies(Base):
-    __tablename__ = "vacancies"
+class Word(Base):
+    __tablename__ = "words"
     id = Column(Integer, primary_key=True)
-    id_hh= Column(Integer)
-    title = Column(String)
-    description = Column(String)
-    conditions = Column(String)
-    requirements = Column(String)
-    responsibilities = Column(String)
-    interview_questions = Column(String)
-    priority = Column(String)
-    test_task = Column(String)
+    english = Column(String)
+    russian = Column(String)
+    category = Column(String, default="new")
+    user_words = relationship("UserWord", back_populates="word")
 
-    candidates = relationship("Candidates", back_populates="vacancy", cascade="all, delete-orphan") # Вот строка с каскадом
+class UserWord(Base):
+    __tablename__ = "user_words"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    word_id = Column(Integer, ForeignKey("words.id"))
+    last_repeat_time = Column(DateTime)
+    correct_answers = Column(Integer, default=0)
+    incorrect_answers = Column(Integer, default=0)
+    user = relationship("User", back_populates="user_words")
+    word = relationship("Word", back_populates="user_words")
 
-# Создание таблиц в базе данных
-def create_tables():
-    Base.metadata.create_all(engine)
+async_engine = create_async_engine(DATABASE_URL)
+AsyncSessionLocal = sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
 
-# Создание сессии для взаимодействия с базой данных
-Session = sessionmaker(bind=engine)
-session = Session()
+async def init_db():
+    async with async_engine.begin() as conn:
+      await conn.run_sync(Base.metadata.create_all)
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+       yield session
 
 if __name__ == "__main__":
-    create_tables()
+    pass

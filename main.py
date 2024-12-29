@@ -6,7 +6,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State, StatesGroup
 import psutil
 from bot import bot
+from db.create_tables import get_db, init_db
 from handlers import start_router, handlers_router
+from handlers.utils import check_if_words_need_review, load_words_from_file
 from middlewares.logging import LoggingMiddleware
 from db.create_table import create_tables
 from config import BOT_TOKEN
@@ -48,6 +50,22 @@ async def check_active_vacancies():
 async def main():
     await dp.start_polling(bot)
     
+# --- Запуск бота ---
+async def on_startup():
+  await init_db()
+
+async def main():
+    dp.startup.register(on_startup)
+    # Загрузка слов из файла при запуске бота
+    async for session in get_db():
+        await load_words_from_file('words.txt', session)
+
+    await dp.start_polling(bot)
+
+    while True: #Периодическая проверка необходимости опроса
+        await asyncio.sleep(60*60) # Проверка каждый час
+        await check_if_words_need_review()
+
 
 if __name__ == '__main__':
     import asyncio
