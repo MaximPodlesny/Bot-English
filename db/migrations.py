@@ -11,7 +11,7 @@ import os
 #     f.write(config)
 
 # Создание миграции
-os.system('alembic revision --autogenerate -m "Добавление поля test_task"')
+os.system('alembic revision --autogenerate -m "Первая миграция"')
 
 # Применение миграции
 os.system("alembic upgrade head")

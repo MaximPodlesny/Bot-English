@@ -1,8 +1,7 @@
 from aiogram import Bot
 import asyncio
-from config import BOT_TOKEN
+from config import BOT_TOKEN, DATABASE_URL
 # from collections import deque
-
 # from handlers.utils.get_admin_ids import get_admins
 
 

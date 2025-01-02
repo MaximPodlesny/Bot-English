@@ -4,20 +4,20 @@ import subprocess
 from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State, StatesGroup
-import psutil
+# import psutil
 from bot import bot
 from db.create_tables import get_db, init_db
 from handlers import start_router, handlers_router
 from handlers.utils import check_if_words_need_review, load_words_from_file
 from middlewares.logging import LoggingMiddleware
-from db.create_table import create_tables
+# from db.create_tables import create_tables
 from config import BOT_TOKEN
 
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
-create_tables()
+# create_tables()
 
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
@@ -47,8 +47,8 @@ async def check_active_vacancies():
             # await collect_responses()
     # asyncio.run(check_active_vacancies())
 
-async def main():
-    await dp.start_polling(bot)
+# async def main():
+#     await dp.start_polling(bot)
     
 # --- Запуск бота ---
 async def on_startup():
@@ -63,8 +63,8 @@ async def main():
     await dp.start_polling(bot)
 
     while True: #Периодическая проверка необходимости опроса
-        await asyncio.sleep(60*60) # Проверка каждый час
         await check_if_words_need_review()
+        await asyncio.sleep(60*60) # Проверка каждый час
 
 
 if __name__ == '__main__':

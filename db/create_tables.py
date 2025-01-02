@@ -14,8 +14,11 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(String, unique=True)
+    telegram_id = Column(Integer, unique=True)
+    words_per_day = Column(Integer, default=10)  # Новое поле: количество слов в день
+    days_between_lessons = Column(Integer, default=1)  # Новое поле: интервал между уроками
     user_words = relationship("UserWord", back_populates="user")
+
 
 class Word(Base):
     __tablename__ = "words"
@@ -23,7 +26,9 @@ class Word(Base):
     english = Column(String)
     russian = Column(String)
     category = Column(String, default="new")
+    audio_path = Column(String, nullable=True)  # Добавляем поле для пути к аудиофайлу
     user_words = relationship("UserWord", back_populates="word")
+
 
 class UserWord(Base):
     __tablename__ = "user_words"
@@ -33,6 +38,7 @@ class UserWord(Base):
     last_repeat_time = Column(DateTime)
     correct_answers = Column(Integer, default=0)
     incorrect_answers = Column(Integer, default=0)
+    current_step = Column(Integer, default=0)  # Новый столбец: текущий шаг повторения
     user = relationship("User", back_populates="user_words")
     word = relationship("Word", back_populates="user_words")
 

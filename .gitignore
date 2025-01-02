@@ -3,3 +3,7 @@ venv/
 alembic.ini
 test.py
 PostgreSQL/
+.pem
+server.crt
+server.csr
+server.key
