@@ -17,6 +17,9 @@ class User(Base):
     telegram_id = Column(Integer, unique=True)
     words_per_day = Column(Integer, default=10)  # Новое поле: количество слов в день
     days_between_lessons = Column(Integer, default=1)  # Новое поле: интервал между уроками
+    num_of_calls = Column(Integer, default=0)
+    current_step = Column(Integer, default=0)  # Новый столбец: текущий шаг повторения
+    last_repeat_time = Column(DateTime)
     user_words = relationship("UserWord", back_populates="user")
 
 
@@ -27,6 +30,7 @@ class Word(Base):
     russian = Column(String)
     category = Column(String, default="new")
     audio_path = Column(String, nullable=True)  # Добавляем поле для пути к аудиофайлу
+    transcription = Column(String, nullable = True)
     user_words = relationship("UserWord", back_populates="word")
 
 
@@ -35,10 +39,8 @@ class UserWord(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     word_id = Column(Integer, ForeignKey("words.id"))
-    last_repeat_time = Column(DateTime)
     correct_answers = Column(Integer, default=0)
     incorrect_answers = Column(Integer, default=0)
-    current_step = Column(Integer, default=0)  # Новый столбец: текущий шаг повторения
     user = relationship("User", back_populates="user_words")
     word = relationship("Word", back_populates="user_words")
 

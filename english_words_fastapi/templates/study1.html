@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Study</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+    <h1>Study Word</h1>
+        {% for word in words %}
+            <form method="post" action="/check_answer">
+                {% include 'word_item.html' %}
+                <input type="hidden" name="word_id" value="{{ word.id }}">
+                <input type="text" name="answer">
+                <button>Check</button>
+           </form>
+        {% endfor %}
+</body>
+<script src="{{ url_for('static', path='/script.js') }}"></script>
+</html>

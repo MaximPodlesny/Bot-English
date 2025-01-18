@@ -12,17 +12,22 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
+from fastapi import Depends
 
+from g4f.client import Client
+
+from config import WEB_APP_URL
 from db.create_tables import UserWord, get_db
 # from sqlalchemy import select
-from handlers.utils import create_user_word, get_new_words_for_user, get_repeat_time, get_user_by_telegram_id, get_user_settings, get_words_for_repeat, mark_words_as_learned, update_user_settings, update_user_word
+from handlers.utils import create_user_word, get_new_words_for_user, get_repeat_time, get_user_by_telegram_id, get_user_settings, get_words_for_repeat, mark_words_as_learned, process_commitment_gpt, update_user_settings, update_user_word
 # from openai import AsyncOpenAI
 
 # from config import WEB_APP_URL
 
-WEB_APP_URL = 'https://127.0.0.1:8000'
+# WEB_APP_URL = 'https://127.0.0.1:8000'
 router = Router()
 
+client = Client()
 
 @router.callback_query(F.data == "settings")
 async def settings_words_count_command(callback: types.CallbackQuery):
@@ -81,6 +86,14 @@ async def set_days_between_handler(callback: types.CallbackQuery):
       )
    await callback.answer()
 
+@router.callback_query(F.data == "cancel_repeat")
+async def cancel_recall(callback: types.CallbackQuery):
+    """Отмена напоминания."""
+    async for session in get_db():
+      user = await get_user_by_telegram_id(callback.from_user.id, session)
+      user.num_of_calls = 5
+      await session.commit()
+
 # @router.callback_query(F.data == "new_words")
 # async def new_words_command(callback: types.CallbackQuery):
 #    """Запускает процесс получения новых слов."""
@@ -120,10 +133,11 @@ async def new_words_command(callback: types.CallbackQuery):
    async for session in get_db():
       user = await get_user_by_telegram_id(callback.from_user.id, session)
       
-      url = f"{WEB_APP_URL}/?telegram_id={user.telegram_id}&type=new"  # Передаем telegram_id и type=new в URL
+      # url = f"{WEB_APP_URL}?telegram_id={user.telegram_id}&type=new"  # Передаем telegram_id и type=new в URL
+      url = f"{WEB_APP_URL}?telegram_id={user.telegram_id}&type=new"  # Передаем telegram_id и type=new в URL
       button = types.InlineKeyboardButton(text="Начать изучение новых слов", web_app=types.WebAppInfo(url=url))
       keyboard = InlineKeyboardMarkup(inline_keyboard=[[button]])
-
+      await callback.message.answer(url)
       await callback.message.answer(
          "Начните изучение новых слов в мини-приложении",
          reply_markup=keyboard
@@ -179,16 +193,17 @@ async def repeat_words_command(callback: types.CallbackQuery):
    """Запускает процесс повторения слов."""
    async for session in get_db():
       user = await get_user_by_telegram_id(callback.from_user.id, session)
-      
-      url = f"{WEB_APP_URL}/?telegram_id={user.telegram_id}"  # Передаем telegram_id в URL
+      user.num_of_calls = 5
+      url = f"{WEB_APP_URL}?telegram_id={user.telegram_id}&type=repeat"  # Передаем telegram_id в URL
       button = types.InlineKeyboardButton(text="Начать повторение", web_app=types.WebAppInfo(url=url))
       keyboard = InlineKeyboardMarkup(inline_keyboard=[[button]])
-
+      await callback.message.answer(url)
       await callback.message.answer(
          "Начните повторение в мини-приложении",
          reply_markup=keyboard
       )
       await callback.answer()
+      await session.commit()
 
 @router.message(F.web_app_data)
 async def web_app_handler(message: types.Message):
@@ -222,3 +237,14 @@ async def web_app_handler(message: types.Message):
             await message.answer("Слова обновлены", show_alert=True)
 
 
+@router.message(F.text.not_in([
+    "Поиск кандидата", "Найти кандидата", "собственная база", 
+    "через hh", "К созданию вакансии", "Создать вакансию", "К поиску кандидата", "Отмена"
+]))
+async def process_ai(message: types.Message, data=None, flag=False):
+   await message.answer('В process_ai')
+   # task = asyncio.to_thread(await process_commitment_gpt(message, client))
+   task = asyncio.create_task(process_commitment_gpt(message, client))
+   await task
+   await asyncio.sleep(5)
+   task.cancel()

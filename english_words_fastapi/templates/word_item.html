@@ -1,0 +1,10 @@
+<div>
+    <span class="word-text">{{ word.english }}</span>
+    <span class="transcription-text">{{ word.transcription }}</span>
+    {% if word.audio_path %}
+    <button class="audio-button" data-audio-path="{{ url_for('static', path=word.audio_path) }}">
+          <i class="fa fa-volume-up"></i> <!-- Font Awesome icon, нужно будет добавить -->
+    </button>
+    {% endif %}
+   <p>{{ word.russian }}</p>
+</div>

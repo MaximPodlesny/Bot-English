@@ -2,15 +2,42 @@
 <html>
 <head>
     <title>Изучение слов</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <!-- <link rel="stylesheet" href="/static/style.css"> -->
+    <link rel="stylesheet" href="/static/style.css?v={{ cache_buster }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
     <div id="wordContainer">
-        <h1 id="englishWord"></h1>
-        <p id="russianWord"></p>
+        {% if words %}
+            {% for word in words %}
+                <div class="word-item" data-word-id="{{ word.id }}">
+                    <span class="word-text">{{ word.english }}</span>
+                    <span class="transcription-text">{{ word.transcription }}</span>
+                    {% if word.audio_path %}
+                        <button class="audio-button" data-audio-path="{{ url_for('static', path=word.audio_path) }}" aria-label="Воспроизвести аудио">
+                            <i class="fa fa-volume-up"></i> <!-- Font Awesome icon, нужно будет добавить -->
+                        </button>
+                    {% endif %}
+                   <p>{{ word.russian }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <h1 id="englishWord"></h1>
+            <p id="transcription"></p>
+            <p id="russianWord"></p>
+            <button id="playAudioButton" class="hidden">
+                <i class="fa fa-volume-up"></i>
+            </button>
+        {% endif %}
         <audio id="audioPlayer" preload="auto"></audio>
         <button id="nextWordBtn">Следующее слово</button>
+        <div class="progress-container"> 
+            <div class="progress-bar" style="display: block; height: 100%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
     </div>
-    <script src="/static/script.js"></script>
+
+    <script src="/static/script.js?v={{ cache_buster }}"></script>
 </body>
 </html>

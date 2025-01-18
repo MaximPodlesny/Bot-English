@@ -8,7 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from bot import bot
 from db.create_tables import get_db, init_db
 from handlers import start_router, handlers_router
-from handlers.utils import check_if_words_need_review, load_words_from_file
+from handlers.utils import change_num_of_calls, check_if_words_need_review, load_words_from_file
 from middlewares.logging import LoggingMiddleware
 # from db.create_tables import create_tables
 from config import BOT_TOKEN
@@ -51,6 +51,10 @@ async def check_active_vacancies():
 #     await dp.start_polling(bot)
     
 # --- Запуск бота ---
+
+async def check_words_review():
+    asyncio.create_task(check_if_words_need_review())
+
 async def on_startup():
   await init_db()
 
@@ -60,14 +64,18 @@ async def main():
     async for session in get_db():
         await load_words_from_file('words.txt', session)
 
+    await check_words_review()
+    await change_num_of_calls()
     await dp.start_polling(bot)
 
-    while True: #Периодическая проверка необходимости опроса
-        await check_if_words_need_review()
-        await asyncio.sleep(60*60) # Проверка каждый час
+    # while True: #Периодическая проверка необходимости опроса
+    #     print('В цикле')
+    #     await check_if_words_need_review()
+    #     await asyncio.sleep(10) # Проверка каждый час
 
 
 if __name__ == '__main__':
     import asyncio
     asyncio.run(main())
+    
 
